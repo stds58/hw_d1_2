@@ -1,0 +1,19 @@
+---
+- name: Check if Swarm is already initialized
+  command: docker info --format "{{ '{ .Swarm.ControlPlane }' }}"
+  register: swarm_info
+  ignore_errors: yes
+  changed_when: false
+
+- name: Initialize Swarm if not active
+  command: docker swarm init
+  when: "'Connection refused' in swarm_info.msg or 'inactive' in swarm_info.stdout"
+
+- name: Check Swarm status
+  command: docker info
+  register: docker_info
+  when: swarm_initialized is not defined or not swarm_initialized.changed
+
+- name: Get join token for workers
+  shell: docker swarm join-token worker | grep docker > /tmp/join.sh
+  register: join_token

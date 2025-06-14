@@ -1,0 +1,14 @@
+---
+- name: Upload docker-compose.yml
+  copy:
+    src: docker-compose.yml
+    dest: ~/docker-compose.yml
+    mode: 0644
+
+- name: Deploy Docker Stack
+  shell: |
+    cd ~/
+    sudo docker stack deploy -c docker-compose.yml sockshop
+  args:
+    chdir: /home/ubuntu
+

@@ -1,0 +1,9 @@
+---
+- name: Copy join script from manager
+  copy:
+    content: "{{ hostvars['manager_node']['join_token'].stdout }}"
+    dest: /tmp/join.sh
+    mode: +x
+
+- name: Join Swarm cluster
+  shell: sh /tmp/join.sh

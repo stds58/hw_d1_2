@@ -1,0 +1,25 @@
+---
+#wsl ansible-playbook -i inventory.ini playbook.yml
+- name: Setup common packages on all nodes
+  hosts: all
+  become: yes
+  roles:
+    - common
+
+- name: Initialize Swarm on manager node
+  hosts: manager
+  become: yes
+  roles:
+    - manager
+
+- name: Join worker nodes to the cluster
+  hosts: workers
+  become: yes
+  roles:
+    - worker
+
+- name: Deploy
+  hosts: manager
+  become: yes
+  roles:
+    - manager
