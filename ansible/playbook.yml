@@ -18,8 +18,3 @@
   roles:
     - worker
 
-- name: Deploy
-  hosts: manager
-  become: yes
-  roles:
-    - manager

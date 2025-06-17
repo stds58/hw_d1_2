@@ -1,19 +1,49 @@
 ---
-- name: Check if Swarm is already initialized
-  command: docker info --format "{{ '{ .Swarm.ControlPlane }' }}"
+- name: Check if Swarm is active (alternative)
+  command: docker info
   register: swarm_info
-  ignore_errors: yes
   changed_when: false
+  ignore_errors: yes
 
 - name: Initialize Swarm if not active
-  command: docker swarm init
-  when: "'Connection refused' in swarm_info.msg or 'inactive' in swarm_info.stdout"
+  command: sudo docker swarm init --advertise-addr {{ ansible_default_ipv4.address }}
+  when: >
+    (swarm_info is failed) or
+    ('inactive' in swarm_info.stdout)
 
-- name: Check Swarm status
-  command: docker info
-  register: docker_info
-  when: swarm_initialized is not defined or not swarm_initialized.changed
+- name: Upload docker-compose.yml
+  copy:
+    src: docker-compose.yml
+    dest: ~/docker-compose.yml
+    mode: 0644
 
-- name: Get join token for workers
-  shell: docker swarm join-token worker | grep docker > /tmp/join.sh
-  register: join_token
+- name: Deploy Docker Stack
+  shell: |
+    cd ~/
+    sudo docker stack deploy -c docker-compose.yml sockshop
+  args:
+    chdir: /home/ubuntu
+
+- name: Get manager node IP address
+  shell: hostname -I | awk '{print $1}'
+  register: manager_ip_output
+  changed_when: false
+
+- name: Save manager IP as global fact
+  set_fact:
+    manager_ip: "{{ manager_ip_output.stdout }}"
+
+- name: Show manager node IP address
+  debug:
+    msg: "Manager Node IP Address is: {{ manager_ip_output.stdout }}"
+
+- name: Get worker join token and command
+  shell: docker swarm join-token worker | grep 'docker swarm join'
+  register: worker_join_command
+  changed_when: false
+
+- name: Set fact for worker join command
+  set_fact:
+    join_command: "{{ worker_join_command.stdout }}"
+
+

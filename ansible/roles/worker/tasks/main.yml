@@ -1,9 +1,9 @@
 ---
-- name: Copy join script from manager
-  copy:
-    content: "{{ hostvars['manager_node']['join_token'].stdout }}"
-    dest: /tmp/join.sh
-    mode: +x
+- name: Show Manager IP from worker
+  debug:
+    msg: "Manager IP is: {{ hostvars['manager_node']['manager_ip'] }}"
 
-- name: Join Swarm cluster
-  shell: sh /tmp/join.sh
+- name: Join Swarm cluster using manager's join command
+  shell: "{{ hostvars['manager_node']['join_command'] }}"
+
+
